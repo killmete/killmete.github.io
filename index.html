@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cute Message Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastelPink: '#FFD1DC',
+                        babyBlue: '#89CFF0',
+                        darkPink: '#FF5E89', /* Punchier pink */
+                        darkBlue: '#2A7BB5'  /* Stronger blue */
+                    },
+                    fontFamily: {
+                        sans: ['"Kanit"', 'sans-serif'],
+                    },
+                    keyframes: {
+                        'fade-in-down': {
+                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    },
+                    animation: {
+                        'fade-in-down': 'fade-in-down 0.4s ease-out'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background-color: #FFD1DC;
+            /* fallback */
+            background-color: theme('colors.pastelPink');
+            /* Cozy dark overlay over the background image */
+            background-image:
+                linear-gradient(rgba(30, 20, 45, 0.6), rgba(10, 5, 20, 0.8)),
+                url('background.jpg'),
+                radial-gradient(#89CFF0 1.5px, transparent 1.5px);
+            background-size: cover, cover, 24px 24px;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+
+        /* Northern Lights Effect */
+        .northern-lights {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40vh;
+            background: linear-gradient(180deg, rgba(46, 204, 113, 0.4) 0%, rgba(52, 152, 219, 0.2) 40%, transparent 100%);
+            filter: blur(40px);
+            opacity: 0.6;
+            animation: aurora 3s infinite alternate ease-in-out;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes aurora {
+            0% {
+                opacity: 0.6;
+                transform: scale(1) translateY(0) skewX(-10deg);
+                filter: blur(40px) hue-rotate(0deg);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1) translateY(-10px) skewX(5deg);
+                filter: blur(50px) hue-rotate(20deg);
+            }
+
+            100% {
+                opacity: 0.6;
+                transform: scale(1) translateY(0) skewX(-10deg);
+                filter: blur(40px) hue-rotate(-20deg);
+            }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px 0 rgba(137, 207, 240, 0.2);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: theme('colors.pastelPink');
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.darkPink');
+        }
+
+        @keyframes twinkling {
+
+            0%,
+            100% {
+                opacity: 0.2;
+                transform: scale(0.8);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkling infinite ease-in-out;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(110vh) scale(0.5);
+                opacity: 0;
+            }
+
+            15% {
+                opacity: 1;
+                transform: translateY(85vh) scale(0.8);
+            }
+
+            85% {
+                opacity: 1;
+                transform: translateY(15vh) scale(1.2);
+            }
+
+            100% {
+                transform: translateY(-10vh) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes sway {
+            0% {
+                transform: translateX(calc(var(--sway-amount) * -1));
+            }
+
+            100% {
+                transform: translateX(var(--sway-amount));
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .firefly {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatUp linear forwards;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 font-sans text-gray-800 overflow-x-hidden relative">
+    <div class="northern-lights"></div>
+    <div
+        class="glass-panel w-full max-w-md rounded-3xl p-8 space-y-6 relative z-10 transition-all duration-500 overflow-hidden relative">
+        <!-- NOTES VIEW -->
+        <div id="notes-view" class="transition-opacity duration-300 opacity-100 flex flex-col h-full space-y-6">
+            <!-- Header -->
+            <div class="text-center space-y-2 relative">
+                <h1
+                    class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-darkPink to-darkBlue pb-1">
+                    Our Memories
+                </h1>
+                <p class="text-gray-600 text-sm font-bold">forever engraved in time ✨</p>
+                <!-- Add Note Button -->
+                <button id="show-add-btn"
+                    class="absolute top-0 right-0 w-10 h-10 rounded-full bg-white/80 border-2 border-white shadow-sm flex items-center justify-center text-darkPink hover:bg-white hover:shadow-md transition-all group">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6 transform group-hover:rotate-90 transition-transform" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Messages List -->
+            <div class="flex-1 space-y-4">
+                <div class="flex items-center justify-between pb-2 border-b-2 border-white/60">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        All Notes
+                    </h2>
+                    <span id="message-count"
+                        class="text-xs font-bold bg-pastelPink text-darkPink px-3 py-1 rounded-full shadow-sm">0</span>
+                </div>
+                <!-- Min height ensures panel doesn't collapse too small if 0 messages -->
+                <div id="messages-container"
+                    class="space-y-3 max-h-96 min-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                </div>
+
+                <!-- Pagination Controls -->
+                <div class="flex justify-between items-center pt-2">
+                    <button id="prev-btn"
+                        class="text-sm font-bold text-darkBlue px-3 py-1 rounded-lg bg-white/50 border border-white/60 shadow-sm hover:bg-white/90 hover:shadow transition-all disabled:opacity-30 disabled:cursor-not-allowed hidden">←
+                        Prev</button>
+                    <span id="page-indicator" class="text-xs font-bold text-gray-600 hidden">Page 1</span>
+                    <button id="next-btn"
+                        class="text-sm font-bold text-darkBlue px-3 py-1 rounded-lg bg-white/50 border border-white/60 shadow-sm hover:bg-white/90 hover:shadow transition-all disabled:opacity-30 disabled:cursor-not-allowed hidden">Next
+                        →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD NOTE VIEW -->
+        <div id="add-note-view"
+            class="hidden opacity-0 transition-opacity duration-300 flex flex-col h-full justify-center space-y-6">
+            <div class="flex items-center gap-4 mb-2">
+                <button id="back-to-notes-btn"
+                    class="w-10 h-10 rounded-full bg-white/80 border-2 border-white shadow-sm flex items-center justify-center text-darkBlue hover:bg-white hover:shadow-md transition-all group">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5 transform group-hover:-translate-x-1 transition-transform" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </button>
+                <h2
+                    class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-darkPink to-darkBlue block">
+                    Write a Note
+                </h2>
+            </div>
+
+            <form class="space-y-5">
+                <div>
+                    <label for="name" class="block text-sm font-bold text-gray-800 mb-1 ml-1">Your Name</label>
+                    <input type="text" id="name" placeholder="Babe 💕"
+                        class="w-full px-4 py-3 rounded-2xl border-2 border-white bg-white/90 focus:bg-white focus:border-babyBlue focus:ring-4 focus:ring-babyBlue/40 outline-none transition-all duration-300 placeholder-gray-400 shadow-sm text-gray-800 font-medium">
+                </div>
+                <div>
+                    <label for="message" class="block text-sm font-bold text-gray-800 mb-1 ml-1">Message</label>
+                    <textarea id="message" rows="5" placeholder="Your feelings..."
+                        class="w-full px-4 py-3 rounded-2xl border-2 border-white bg-white/90 focus:bg-white focus:border-pastelPink focus:ring-4 focus:ring-pastelPink/50 outline-none transition-all duration-300 placeholder-gray-400 resize-none shadow-sm custom-scrollbar text-gray-800 font-medium"></textarea>
+                </div>
+                <button type="button" id="send-btn"
+                    class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-babyBlue to-[#75bbed] hover:to-[#61aadd] text-white font-bold text-lg shadow-lg shadow-babyBlue/40 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:translate-y-0 active:scale-95">
+                    Send Message 💌
+                </button>
+            </form>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // TODO: Replace with your Firebase project configuration
+        // You can get this from your Firebase Console -> Project Settings -> General -> Web App
+        const firebaseConfig = {
+            apiKey: "AIzaSyCb56rQCWgkWeWfK1F3UGYT4zVNnNUNsok",
+            authDomain: "koidorobou.firebaseapp.com",
+            projectId: "koidorobou",
+            storageBucket: "koidorobou.firebasestorage.app",
+            messagingSenderId: "697249648292",
+            appId: "1:697249648292:web:e2307c5a2ea7c63673a031"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const notesView = document.getElementById('notes-view');
+            const addNoteView = document.getElementById('add-note-view');
+            const showAddBtn = document.getElementById('show-add-btn');
+            const backToNotesBtn = document.getElementById('back-to-notes-btn');
+
+            const toggleViews = (showAdd) => {
+                if (showAdd) {
+                    notesView.classList.replace('opacity-100', 'opacity-0');
+                    setTimeout(() => {
+                        notesView.classList.add('hidden');
+                        addNoteView.classList.remove('hidden');
+                        setTimeout(() => addNoteView.classList.replace('opacity-0', 'opacity-100'), 50);
+                    }, 300);
+                } else {
+                    addNoteView.classList.replace('opacity-100', 'opacity-0');
+                    setTimeout(() => {
+                        addNoteView.classList.add('hidden');
+                        notesView.classList.remove('hidden');
+                        setTimeout(() => notesView.classList.replace('opacity-0', 'opacity-100'), 50);
+                    }, 300);
+                }
+            };
+
+            showAddBtn.addEventListener('click', () => toggleViews(true));
+            backToNotesBtn.addEventListener('click', () => toggleViews(false));
+
+            const sendBtn = document.getElementById('send-btn');
+            const nameInput = document.getElementById('name');
+            const messageInput = document.getElementById('message');
+            const messagesContainer = document.getElementById('messages-container');
+            const messageCount = document.getElementById('message-count');
+
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const pageIndicator = document.getElementById('page-indicator');
+
+            let messages = [];
+            let currentPage = 1;
+            const messagesPerPage = 5;
+
+            // Function to format the date
+            const formatDate = (dateString) => {
+                const date = new Date(dateString);
+                return date.toLocaleDateString(undefined, {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+            };
+
+            const renderPaginatedMessages = () => {
+                messagesContainer.innerHTML = '';
+                const totalPages = Math.ceil(messages.length / messagesPerPage) || 1;
+
+                if (currentPage > totalPages) currentPage = totalPages;
+
+                const startIndex = (currentPage - 1) * messagesPerPage;
+                const endIndex = startIndex + messagesPerPage;
+                const messagesToShow = messages.slice(startIndex, endIndex);
+
+                messagesToShow.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = 'bg-white/90 p-4 rounded-2xl shadow-sm border border-white hover:shadow-md transition-shadow animate-fade-in-down';
+                    msgDiv.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-darkBlue">${escapeHTML(msg.name)}</span>
+                            <span class="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md">${formatDate(msg.date)}</span>
+                        </div>
+                        <p class="text-gray-600 text-sm leading-relaxed">${escapeHTML(msg.text)}</p>
+                    `;
+                    messagesContainer.appendChild(msgDiv);
+                });
+
+                messageCount.textContent = messages.length;
+
+                // Pagination UI
+                if (messages.length > messagesPerPage) {
+                    prevBtn.classList.remove('hidden');
+                    nextBtn.classList.remove('hidden');
+                    pageIndicator.classList.remove('hidden');
+
+                    pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+                    prevBtn.disabled = currentPage === 1;
+                    nextBtn.disabled = currentPage === totalPages;
+                } else {
+                    prevBtn.classList.add('hidden');
+                    nextBtn.classList.add('hidden');
+                    pageIndicator.classList.add('hidden');
+                }
+            };
+
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderPaginatedMessages();
+                    messagesContainer.scrollTop = 0;
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(messages.length / messagesPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderPaginatedMessages();
+                    messagesContainer.scrollTop = 0;
+                }
+            });
+
+            // Listen to messages from Firestore in real-time
+            try {
+                const q = query(collection(db, "messages"), orderBy("date", "desc"));
+                onSnapshot(q, (snapshot) => {
+                    messages = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    renderPaginatedMessages();
+                }, (error) => {
+                    console.warn("Firestore error (likely missing config):", error);
+                    // Fallback to local storage if Firebase is not yet configured
+                    const localData = localStorage.getItem('cuteMessages');
+                    if (localData) {
+                        messages = JSON.parse(localData);
+                        renderPaginatedMessages();
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to setup Firestore listener:', error);
+            }
+
+            // Handle new message submisson
+            sendBtn.addEventListener('click', async () => {
+                const name = nameInput.value.trim() || 'Babe 💕';
+                const text = messageInput.value.trim();
+                if (!text) {
+                    messageInput.classList.add('border-red-400', 'ring-red-400/30');
+                    setTimeout(() => messageInput.classList.remove('border-red-400', 'ring-red-400/30'), 800);
+                    return;
+                }
+                const newMessage = {
+                    name,
+                    text,
+                    date: new Date().toISOString()
+                };
+
+                // Save to Firestore (fallback to local if it fails)
+                try {
+                    await addDoc(collection(db, "messages"), newMessage);
+                } catch (error) {
+                    console.warn('Could not save to Firestore! Saving locally instead.', error);
+                    messages.unshift(newMessage);
+                    localStorage.setItem('cuteMessages', JSON.stringify(messages));
+                    renderPaginatedMessages();
+                }
+
+                // Reset to page 1 and update visually
+                currentPage = 1;
+                renderPaginatedMessages();
+                messagesContainer.scrollTop = 0;
+
+                // Clear inputs
+                messageInput.value = '';
+                nameInput.value = '';
+
+                // Switch back to notes view automatically
+                toggleViews(false);
+            });
+            // Utility to prevent XSS
+            function escapeHTML(str) {
+                return str.replace(/[&<>'"]/g,
+                    tag => ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        "'": '&#39;',
+                        '"': '&quot;'
+                    }[tag] || tag)
+                );
+            }
+
+            // --- ANIMATIONS ---
+            // 1. Twinkling Stars (Top Area)
+            const createStars = () => {
+                const starContainer = document.createElement('div');
+                starContainer.className = 'absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0';
+                document.body.insertBefore(starContainer, document.body.firstChild);
+
+                for (let i = 0; i < 50; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    const size = Math.random() * 3 + 1; // 1px to 4px
+                    star.style.width = `${size}px`;
+                    star.style.height = `${size}px`;
+                    star.style.left = `${Math.random() * 100}%`;
+                    // Concentrate stars mostly in the upper half
+                    star.style.top = `${Math.random() * 60}%`;
+                    star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                    star.style.animationDelay = `${Math.random() * 2}s`;
+                    star.style.opacity = Math.random();
+                    starContainer.appendChild(star);
+                }
+            };
+            createStars();
+
+            // 2. Floating Fireflies (Hearts & Stars)
+            const spawnFirefly = () => {
+                const firefly = document.createElement('div');
+                firefly.className = 'firefly';
+
+                const swayWrapper = document.createElement('div');
+                const spinWrapper = document.createElement('div');
+
+                const shapes = ['💖', '✨', '💕', '⭐', '🌸'];
+                spinWrapper.innerText = shapes[Math.floor(Math.random() * shapes.length)];
+
+                swayWrapper.appendChild(spinWrapper);
+                firefly.appendChild(swayWrapper);
+
+                firefly.style.left = `${Math.random() * 100}vw`;
+
+                // Random float up speed
+                const floatDuration = Math.random() * 10 + 8; // 8s to 18s
+                firefly.style.animationDuration = `${floatDuration}s`;
+
+                // Random sway logic for curved arc effect
+                const swayDuration = Math.random() * 4 + 3; // 3s to 7s
+                const swayAmount = Math.random() * 80 + 30; // 30px to 110px
+                swayWrapper.style.animation = `sway ${swayDuration}s ease-in-out infinite alternate`;
+                swayWrapper.style.setProperty('--sway-amount', `${swayAmount}px`);
+
+                // Random spinning effect
+                const spinDuration = Math.random() * 6 + 4; // 4s to 10s
+                const spinDirection = Math.random() > 0.5 ? 'normal' : 'reverse';
+                spinWrapper.style.animation = `spin ${spinDuration}s linear infinite ${spinDirection}`;
+
+                // Apply visual styles to deepest element
+                spinWrapper.style.fontSize = `${Math.random() * 15 + 10}px`;
+                spinWrapper.style.filter = 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.8))';
+
+                document.body.appendChild(firefly);
+
+                setTimeout(() => {
+                    firefly.remove();
+                }, floatDuration * 1000);
+            };
+
+            // Spawn initially a few so screen isn't empty
+            for (let i = 0; i < 5; i++) {
+                setTimeout(spawnFirefly, i * 100);
+            }
+            setInterval(spawnFirefly, 400);
+        });
+    </script>
+</body>
+
+</html>
