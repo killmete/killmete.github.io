@@ -231,11 +231,23 @@
 
         .music-note {
             position: fixed;
-            top: 60px;
+            top: 40px;
             right: 50px;
             pointer-events: none;
             z-index: 5;
             font-size: 24px;
+        }
+
+        .snowflake {
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 2;
+            filter: blur(0.5px);
+            opacity: 0.8;
+            transition: opacity 2s ease-out;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
         }
 
         .rainbow-filter {
@@ -803,6 +815,64 @@
                 setTimeout(spawnFirefly, i * 100);
             }
             setInterval(spawnFirefly, 400);
+
+            // 3. Snowfall with Stacking Effect
+            const snowColumns = Math.ceil(window.innerWidth / 5);
+            const pileHeights = new Array(snowColumns).fill(0);
+
+            const spawnSnowflake = () => {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                const size = Math.random() * 3 + 2; // 2 to 5px
+                flake.style.width = `${size}px`;
+                flake.style.height = `${size}px`;
+
+                const startX = Math.random() * window.innerWidth;
+                const endX = startX + (Math.random() - 0.5) * 80;
+
+                flake.style.left = '0px';
+                flake.style.top = '0px';
+                document.body.appendChild(flake);
+
+                const finalX = Math.max(0, Math.min(window.innerWidth - size, endX));
+                const col = Math.floor(finalX / 5);
+
+                const currentPile = pileHeights[col] || 0;
+                const landHeight = currentPile + (Math.random() * 2);
+                pileHeights[col] = landHeight + (size * 0.4);
+
+                const fallDistance = window.innerHeight - landHeight - size;
+                const fallDuration = (fallDistance / window.innerHeight) * (Math.random() * 3000 + 4000); // 4 to 7s falling
+
+                const anim = flake.animate([
+                    { transform: `translate(${startX}px, -10px)` },
+                    { transform: `translate(${finalX}px, ${fallDistance}px)` }
+                ], {
+                    duration: fallDuration,
+                    easing: 'linear',
+                    fill: 'forwards'
+                });
+
+                anim.onfinish = () => {
+                    const lifespan = Math.random() * 5000 + 5000; // 5 to 10 seconds
+                    setTimeout(() => {
+                        flake.style.opacity = '0';
+                        if (pileHeights[col] > 0) pileHeights[col] = Math.max(0, pileHeights[col] - (size * 0.4));
+                        setTimeout(() => flake.remove(), 2000);
+                    }, lifespan);
+                };
+            };
+
+            window.addEventListener('resize', () => {
+                const newCols = Math.ceil(window.innerWidth / 5);
+                if (newCols > pileHeights.length) {
+                    const diff = newCols - pileHeights.length;
+                    for (let i = 0; i < diff; i++) pileHeights.push(0);
+                }
+            });
+
+            for (let i = 0; i < 20; i++) setTimeout(spawnSnowflake, i * 50);
+            setInterval(spawnSnowflake, 80);
         });
     </script>
 </body>
