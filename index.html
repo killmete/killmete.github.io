@@ -404,9 +404,11 @@
             const nextBtn = document.getElementById('next-btn');
             const pageIndicator = document.getElementById('page-indicator');
 
-            let messages = [];
+            let messages = [];       // visible (revealed) messages
+            let allMessages = [];    // all messages including not-yet-revealed
             let currentPage = 1;
             const messagesPerPage = 5;
+            let revealTimers = [];   // setTimeout IDs for scheduled reveals
 
             // Function to format the date
             const formatDate = (dateString) => {
@@ -414,6 +416,35 @@
                 return date.toLocaleDateString(undefined, {
                     year: 'numeric', month: 'short', day: 'numeric',
                     hour: '2-digit', minute: '2-digit'
+                });
+            };
+
+            // Filter allMessages to only show revealed ones, then re-render
+            const applyRevealFilter = () => {
+                const now = new Date().toISOString();
+                messages = allMessages.filter(msg => !msg.revealDate || msg.revealDate <= now);
+                renderPaginatedMessages();
+            };
+
+            // Schedule precise timers for each upcoming reveal
+            const scheduleRevealTimers = () => {
+                // Clear any existing timers
+                revealTimers.forEach(id => clearTimeout(id));
+                revealTimers = [];
+
+                const now = Date.now();
+                allMessages.forEach(msg => {
+                    if (msg.revealDate) {
+                        const revealMs = new Date(msg.revealDate).getTime();
+                        const delay = revealMs - now;
+                        // Only schedule if reveal is in the future (and within ~24h to avoid overflow)
+                        if (delay > 0 && delay < 86400000) {
+                            const timerId = setTimeout(() => {
+                                applyRevealFilter();
+                            }, delay);
+                            revealTimers.push(timerId);
+                        }
+                    }
                 });
             };
 
@@ -475,24 +506,30 @@
                 }
             });
 
+            // Fallback: re-check every 30s in case a timer was missed
+            setInterval(applyRevealFilter, 30000);
+
             // Listen to messages from Firestore in real-time
             try {
                 const q = query(collection(db, "messages"), orderBy("date", "desc"));
                 onSnapshot(q, (snapshot) => {
-                    const now = new Date().toISOString();
-                    messages = snapshot.docs.map(doc => ({
+                    // Store ALL messages (including future scheduled ones)
+                    allMessages = snapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data()
-                    })).filter(msg => !msg.revealDate || msg.revealDate <= now);
-                    renderPaginatedMessages();
+                    }));
+                    // Apply reveal filter to show only visible ones
+                    applyRevealFilter();
+                    // Schedule precise timers for upcoming reveals
+                    scheduleRevealTimers();
                 }, (error) => {
                     console.warn("Firestore error (likely missing config):", error);
                     // Fallback to local storage if Firebase is not yet configured
                     const localData = localStorage.getItem('cuteMessages');
                     if (localData) {
-                        const now = new Date().toISOString();
-                        messages = JSON.parse(localData).filter(msg => !msg.revealDate || msg.revealDate <= now);
-                        renderPaginatedMessages();
+                        allMessages = JSON.parse(localData);
+                        applyRevealFilter();
+                        scheduleRevealTimers();
                     }
                 });
             } catch (error) {
